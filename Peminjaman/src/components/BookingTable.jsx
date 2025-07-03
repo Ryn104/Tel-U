@@ -1,6 +1,8 @@
 // src/components/BookingTable.jsx
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
+import axios from 'axios';
+
 
 export default function BookingTable() {
     const [bookings, setBookings] = useState([]);
@@ -9,6 +11,9 @@ export default function BookingTable() {
     const [deleteId, setDeleteId] = useState(null);
     const [editData, setEditData] = useState(null);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [status, setStatus] = useState('');
+    const [showAlert, setShowAlert] = useState(false);
+
 
     const handleDeleteClick = (id) => {
         setDeleteId(id);
@@ -30,31 +35,59 @@ export default function BookingTable() {
     };
 
     const handleEditSubmit = async () => {
-        const { waktu_peminjaman, waktu_selesai, ...rest } = editData;
+        const waktuStart = new Date(editData.waktu_peminjaman);
+        const waktuEnd = new Date(editData.waktu_selesai);
 
-        const tanggal_peminjaman = waktu_peminjaman.split('T')[0];
-        const jam_peminjaman = waktu_peminjaman.split('T')[1];
-        const tanggal_selesai = waktu_selesai.split('T')[0];
-        const jam_selesai = waktu_selesai.split('T')[1];
+        const payload = {
+            ...editData,
+            tanggal_peminjaman: waktuStart.toISOString().split('T')[0],
+            waktu_peminjaman: waktuStart.toTimeString().slice(0, 5),
+            tanggal_selesai: waktuEnd.toISOString().split('T')[0],
+            waktu_selesai: waktuEnd.toTimeString().slice(0, 5),
+            id: editData.id,
+            user_id: user.id,
+        };
 
-        const { error } = await supabase
-            .from('test')
-            .update({
-                ...rest,
-                tanggal_peminjaman,
-                waktu_peminjaman: jam_peminjaman,
-                tanggal_selesai,
-                waktu_selesai: jam_selesai,
-            })
-            .eq('id', editData.id);
+        try {
+            const res = await axios.post('https://n8n.srv870769.hstgr.cloud/webhook/edit-booking', payload);
+            console.log('🔥 Response dari n8n:', res.data); // Tambahkan ini
 
-        if (error) {
-            alert('Gagal menyimpan: ' + error.message);
-        } else {
-            fetchBookings();
-            setShowEditModal(false);
-            setEditData(null);
+            if (res.data.success === true) {
+                const { error } = await supabase
+                    .from('test')
+                    .update({
+                        judul: editData.judul,
+                        nama: editData.nama,
+                        kontak: editData.kontak,
+                        unit: editData.unit,
+                        ruangan: editData.ruangan,
+                        peserta: editData.peserta,
+                        tanggal_peminjaman: payload.tanggal_peminjaman,
+                        waktu_peminjaman: payload.waktu_peminjaman,
+                        tanggal_selesai: payload.tanggal_selesai,
+                        waktu_selesai: payload.waktu_selesai,
+                    })
+                    .eq('id', editData.id);
+
+                if (error) {
+                    alert('Gagal menyimpan: ' + error.message);
+                    return;
+                }
+
+                fetchBookings();
+                setShowEditModal(false);
+                setEditData(null);
+            } else {
+                setStatus("Ruangan sudah terpakai!");
+                setShowAlert(true);
+                setTimeout(() => setShowAlert(false), 5000); 
+
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Terjadi kesalahan saat mengirim.");
         }
+        console.log("Payload yang dikirim ke n8n:", payload);
     };
 
     const fetchBookings = async () => {
@@ -120,6 +153,51 @@ export default function BookingTable() {
 
     return (
         <div className="mx-auto p-4 mt-10 xl:w-[100%]">
+            {showAlert && (
+                <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-[90%] max-w-md">
+                    <div
+                        role="alert"
+                        className={`alert shadow-lg text-black  ${status.includes('Berhasil')
+                            ? 'alert-success'
+                            : status.includes('Ruangan')
+                                ? 'alert-warning'
+                                : 'alert-error'
+                            }`}
+                    >
+                        {status.includes('Berhasil') ? (
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-6 w-6 shrink-0 stroke-current"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                        ) : (
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                className="h-6 w-6 shrink-0 stroke-current"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M12 9v2m0 4h.01M12 5a7 7 0 100 14 7 7 0 000-14z"
+                                />
+                            </svg>
+                        )}
+                        <span>{status}</span>
+                    </div>
+                </div>
+            )}
+
             <h2 className="text-4xl text-center font-bold mb-10">Data Peminjaman Ruangan</h2>
             <div className="text-right mb-4 xl:w-[100%]">
                 <button onClick={downloadCSV} className="btn btn-primary">
@@ -137,31 +215,25 @@ export default function BookingTable() {
                                     <th></th>
                                     <th className="text-center">Judul</th>
                                     <th className="text-center">Nama</th>
-                                    <th className="text-center">Kontak</th>
                                     <th className="text-center">Unit</th>
                                     <th className="text-center">Ruangan</th>
                                     <th className="text-center">Peserta</th>
-                                    <th className="text-center">Tanggal Peminjaman</th>
-                                    <th className="text-center">Waktu Peminjaman</th>
-                                    <th className="text-center">Tanggal Selesai</th>
-                                    <th className="text-center">Waktu Selesai</th>
+                                    <th className="text-center">Peminjaman</th>
+                                    <th className="text-center">Selesai</th>
                                     <th className="text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {bookings.map((item, index) => (
                                     <tr key={item.id}>
-                                        <th>{index + 1}</th>
-                                        <td>{item.judul}</td>
-                                        <td>{item.nama}</td>
-                                        <td>{item.kontak}</td>
-                                        <td>{item.unit}</td>
-                                        <td>{item.ruangan}</td>
+                                        <th className="text-center">{index + 1}</th>
+                                        <td className="text-center">{item.judul}</td>
+                                        <td className="text-center">{item.nama}</td>
+                                        <td className="text-center">{item.unit}</td>
+                                        <td className="text-center">{item.ruangan}</td>
                                         <td className="text-center">{item.peserta}</td>
-                                        <td className="text-center">{item.tanggal_peminjaman}</td>
-                                        <td className="text-center">{item.waktu_peminjaman}</td>
-                                        <td className="text-center">{item.tanggal_selesai}</td>
-                                        <td className="text-center">{item.waktu_selesai}</td>
+                                        <td className="text-center">{item.tanggal_peminjaman} : {item.waktu_peminjaman}</td>
+                                        <td className="text-center">{item.tanggal_selesai} : {item.waktu_selesai}</td>
                                         {user?.id === item.user_id && (
                                             <td className='flex justify-center'>
                                                 <button

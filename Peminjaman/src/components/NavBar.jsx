@@ -12,7 +12,7 @@ const NavBar = () => {
     };
 
     const linkClasses = (path) =>
-        `flex flex-col items-center px-3 py-2 transition-colors duration-200 ${currentPath === path
+        `flex flex-col items-center px-3 py-1 transition-colors duration-200 ${currentPath === path
             ? 'text-blue-600 border-b-2 border-blue-500'
             : 'text-gray-700 hover:text-blue-700'
         }`;
@@ -44,6 +44,7 @@ const NavBar = () => {
                             />
                         </g>
                     </svg>
+                    <span class="dock-label">Data</span>
                 </button>
             </a>
 
@@ -72,6 +73,7 @@ const NavBar = () => {
                             />
                         </g>
                     </svg>
+                    <span class="dock-label">Home</span>
                 </button>
             </a>
 
@@ -95,6 +97,7 @@ const NavBar = () => {
                         d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1m0-10V5m0 14a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2h4a2 2 0 012 2"
                     />
                 </svg>
+                <span class="dock-label">Logout</span>                
             </button>
 
 
