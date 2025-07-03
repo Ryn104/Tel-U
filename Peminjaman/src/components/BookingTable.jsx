@@ -207,7 +207,7 @@ export default function BookingTable() {
             {loading ? (
                 <p>Memuat data...</p>
             ) : (
-                <div className="overflow-x-auto xl:w-[100%] xl:flex xl:justify-center">
+                <div className="overflow-x-auto xl:w-[100%] xl:flex xl:justify-center mb-10">
                     <div className='xl:w-[90%]'>
                         <table className="table w-full table-xs xl:table-sm table-pin-rows table-pin-cols mx-auto">
                             <thead>
