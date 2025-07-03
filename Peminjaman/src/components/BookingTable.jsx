@@ -124,7 +124,7 @@ export default function BookingTable() {
     const downloadCSV = () => {
         if (!bookings || bookings.length === 0) return;
 
-        const headers = Object.keys(bookings[0]).filter(key => key !== 'id' && key !== 'created_at');
+        const headers = Object.keys(bookings[0]).filter(key => key !== 'id' && key !== 'created_at' && key !== 'user_id');
 
         const rows = bookings.map(booking =>
             headers.map(field => {
