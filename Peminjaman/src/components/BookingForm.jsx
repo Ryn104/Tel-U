@@ -26,43 +26,43 @@ export default function BookingForm() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (new Date(formData.selesai) <= new Date(formData.waktu)) {
-    setStatus("Waktu selesai harus lebih besar dari waktu peminjaman.");
-    return;
-  }
-
-  // ✅ Ambil user yang sedang login
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) {
-    setStatus('Kamu harus login terlebih dahulu.');
-    return;
-  }
-
-  // ✅ Tambahkan user_id ke payload yang dikirim
-  const payload = {
-    ...formData,
-    user_id: user.id,
-  };
-
-  try {
-    const res = await axios.post(
-      'https://n8n.srv870769.hstgr.cloud/webhook/booking-form ',
-      payload
-    );
-
-    if (res.data.success) {
-      setStatus('Ruangan Berhasil Di Booking!');
-    } else {
-      setStatus('Ruangan Sudah Terpakai!');
+    if (new Date(formData.selesai) <= new Date(formData.waktu)) {
+      setStatus("Waktu selesai harus lebih besar dari waktu peminjaman.");
+      return;
     }
-  } catch (err) {
-    setStatus('Terjadi kesalahan saat mengirim.');
-    console.error(err);
-  }
-};
+
+    // ✅ Ambil user yang sedang login
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      setStatus('Kamu harus login terlebih dahulu.');
+      return;
+    }
+
+    // ✅ Tambahkan user_id ke payload yang dikirim
+    const payload = {
+      ...formData,
+      user_id: user.id,
+    };
+
+    try {
+      const res = await axios.post(
+        'https://n8n.srv870769.hstgr.cloud/webhook/booking-form ',
+        payload
+      );
+
+      if (res.data.success) {
+        setStatus('Ruangan Berhasil Di Booking!');
+      } else {
+        setStatus('Ruangan Sudah Terpakai!');
+      }
+    } catch (err) {
+      setStatus('Terjadi kesalahan saat mengirim.');
+      console.error(err);
+    }
+  };
 
 
   const [showAlert, setShowAlert] = useState(false);
@@ -80,123 +80,153 @@ export default function BookingForm() {
 
 
   return (
-    <div className="max-w-xl mx-auto p-4 align-middle hero min-h-screen">
-      <div className='hero-content flex-col'>
-        <h1 className="text-4xl xl:text-5xl text-center font-bold mb-10">Form Peminjaman Ruangan</h1>
-        <form onSubmit={handleSubmit} className="w-full mb-10">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4 mb-12 xl:mb-0 mt-[-1rem] xl:mt-[-2rem]">
+      <div className="hero-content flex-col w-full max-w-2xl shadow-xl bg-white border border-gray-200 rounded-2xl p-8">
+        <h1 className="text-3xl xl:text-5xl text-center font-bold text-blue-900">
+          Form Peminjaman Ruangan
+        </h1>
 
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Nama: </legend>
-            <input name="nama" type="text" className="input w-full p-2 border rounded" placeholder="Nama" onChange={handleChange} required />
-          </fieldset>
+        <form onSubmit={handleSubmit} className="w-full grid grid-cols-1 gap-5">
+          {/* Nama */}
+          <div>
+            <label className="label font-semibold">Nama</label>
+            <input
+              name="nama"
+              type="text"
+              className="input input-bordered w-full"
+              placeholder="Nama Lengkap"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Kontak: </legend>
-            <input name="kontak" type="text" className="input w-full p-2 border rounded" placeholder="Kontak" onChange={handleChange} required />
-          </fieldset>
+          {/* Kontak */}
+          <div>
+            <label className="label font-semibold">Kontak</label>
+            <input
+              name="kontak"
+              type="text"
+              className="input input-bordered w-full"
+              placeholder="Nomor WA atau Email"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Unit: </legend>
-            <input name="unit" type="text" className="input w-full p-2 border rounded" placeholder="Unit" onChange={handleChange} required />
-          </fieldset>
+          {/* Unit */}
+          <div>
+            <label className="label font-semibold">Unit</label>
+            <input
+              name="unit"
+              type="text"
+              className="input input-bordered w-full"
+              placeholder="Unit/Departemen"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Ruangan:</legend>
-            <select name='ruangan' defaultValue="Pick a browser" className="select w-full p-2 border rounded" onChange={handleChange} required>
-              <option value="" >Pilih Ruangan</option>
+          {/* Ruangan */}
+          <div>
+            <label className="label font-semibold">Ruangan</label>
+            <select
+              name="ruangan"
+              className="select select-bordered w-full"
+              onChange={handleChange}
+              required
+            >
+              <option value="">Pilih Ruangan</option>
               <option value="Ruang Meeting Besar">Ruang Meeting Besar (50 orang)</option>
               <option value="Ruang Meeting Kecil">Ruang Meeting Kecil (10 orang)</option>
             </select>
-          </fieldset>
+          </div>
 
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Jumlah Peserta: </legend>
-            <input name="peserta" type="text" className="input w-full p-2 border rounded" placeholder="Jumlah Peserta" onChange={handleChange} required />
-          </fieldset>
+          {/* Jumlah Peserta */}
+          <div>
+            <label className="label font-semibold">Jumlah Peserta</label>
+            <input
+              name="peserta"
+              type="number"
+              className="input input-bordered w-full"
+              placeholder="Contoh: 20"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Kegiatan: </legend>
-            <input name="judul" type="text" className="input w-full p-2 border rounded" placeholder="Kegiatan" onChange={handleChange} required />
-          </fieldset>
+          {/* Judul Kegiatan */}
+          <div>
+            <label className="label font-semibold">Judul Kegiatan</label>
+            <input
+              name="judul"
+              type="text"
+              className="input input-bordered w-full"
+              placeholder="Nama Acara"
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Peminjaman: </legend>
+          {/* Waktu Mulai */}
+          <div>
+            <label className="label font-semibold">Waktu Mulai</label>
             <input
               name="waktu"
               type="datetime-local"
+              className="input input-bordered w-full"
               value={formData.waktu}
               onChange={handleChange}
-              className="input w-full p-2 border rounded"
               required
             />
-          </fieldset>
+          </div>
 
-          <fieldset className="fieldset">
-            <legend className="fieldset-legend">Selesai: </legend>
+          {/* Waktu Selesai */}
+          <div>
+            <label className="label font-semibold">Waktu Selesai</label>
             <input
               name="selesai"
               type="datetime-local"
+              className="input input-bordered w-full"
               value={formData.selesai}
-              min={formData.waktu} // ⛔️ batasi tanggal dan JAM
+              min={formData.waktu}
               onChange={handleChange}
-              className="input w-full p-2 border rounded"
               required
             />
-          </fieldset>
+          </div>
 
-
-
-          <button type="submit" className="btn btn-primary w-full mt-5">Kirim</button>
+          {/* Tombol */}
+          <button type="submit" className="btn btn-primary w-full text-lg mt-2">
+            Kirim Permintaan
+          </button>
         </form>
+
+        {/* Alert */}
         {showAlert && (
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-[90%] max-w-md">
             <div
               role="alert"
-              className={`alert shadow-lg text-black  ${status.includes('Berhasil')
-                ? 'alert-success'
-                : status.includes('Ruangan')
-                  ? 'alert-warning'
-                  : 'alert-error'
+              className={`alert shadow-md text-black rounded-lg ${status.includes('Berhasil')
+                  ? 'alert-success'
+                  : status.includes('Ruangan')
+                    ? 'alert-warning'
+                    : 'alert-error'
                 }`}
             >
-              {/* ICON BERDASARKAN STATUS */}
               {status.includes('Berhasil') ? (
-                // ✅ Ikon sukses (centang)
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 shrink-0 stroke-current"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               ) : (
-                // ❌ Ikon gagal (tanda seru)
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6 shrink-0 stroke-current"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 9v2m0 4h.01M12 5a7 7 0 100 14 7 7 0 000-14z"
-                  />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01M4.93 19h14.14c1.38 0 2.18-1.538 1.51-2.74L13.51 4.76c-.68-1.202-2.34-1.202-3.02 0L3.42 16.26C2.75 17.462 3.55 19 4.93 19z" />
                 </svg>
               )}
-
               <span>{status}</span>
             </div>
           </div>
         )}
       </div>
     </div>
+
   );
 }
