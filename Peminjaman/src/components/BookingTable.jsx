@@ -148,7 +148,7 @@ export default function BookingTable() {
                 type="date"
                 value={filterDate}
                 onChange={(e) => setFilterDate(e.target.value)}
-                className="xl:w-full w-28 ms-[-0.4rem] md:ms-0"
+                className="sm:w-full w-31 ms-[-0.4rem] md:ms-0"
                 placeholder="Filter tanggal"
               />
             </label>
