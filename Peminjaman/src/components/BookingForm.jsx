@@ -80,8 +80,8 @@ export default function BookingForm() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center px-4 mb-12 xl:mb-0 mt-[-1rem] xl:mt-[-2rem]">
-      <div className="hero-content flex-col w-full max-w-2xl shadow-xl bg-white border border-gray-200 rounded-2xl p-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex justify-center px-4 pt-5 pb-21">
+      <div className="flex-col w-full max-w-2xl shadow-xl bg-white border border-gray-200 rounded-2xl p-8">
         <h1 className="text-3xl xl:text-5xl text-center font-bold text-blue-900">
           Form Peminjaman Ruangan
         </h1>
