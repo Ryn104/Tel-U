@@ -29,7 +29,7 @@ export default function Login() {
   const handleGuestLogin = async () => {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: 'guest@example.com',
-      password: 'guest123',
+      password: 'guest12345',
     });
     if (error) {
       alert('Login tamu gagal: ' + error.message);

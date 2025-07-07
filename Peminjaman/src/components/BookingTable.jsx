@@ -32,7 +32,7 @@ export default function BookingTable() {
   const fetchBookings = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('test')
+      .from('Peminjaman Ruang')
       .select('*')
       .order('tanggal_peminjaman', { ascending: true })
       .order('waktu_peminjaman', { ascending: true });
@@ -47,7 +47,7 @@ export default function BookingTable() {
 
   const confirmDelete = async () => {
     if (!deleteId) return;
-    const { error } = await supabase.from('test').delete().eq('id', deleteId);
+    const { error } = await supabase.from('Peminjaman Ruang').delete().eq('id', deleteId);
     if (!error) fetchBookings();
     setShowConfirmModal(false);
     setDeleteId(null);
@@ -69,7 +69,7 @@ export default function BookingTable() {
     try {
       const res = await axios.post('https://n8n.srv870769.hstgr.cloud/webhook/edit-booking', payload);
       if (res.data.success === true) {
-        const { error } = await supabase.from('test').update({
+        const { error } = await supabase.from('Peminjaman Ruang').update({
           judul: editData.judul,
           nama: editData.nama,
           kontak: editData.kontak,
