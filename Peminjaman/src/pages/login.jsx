@@ -47,9 +47,9 @@ export default function Login() {
         {/* Card Login - tampil kiri di desktop, bawah di mobile */}
         <div className="card w-full max-w-md min-h-[28rem] shadow-2xl bg-white rounded-3xl p-6 order-2 lg:order-1">
           <div className="card-body flex flex-col justify-center items-center text-center space-y-6">
-            <h1 className="text-3xl font-extrabold text-blue-800">Masuk dengan Google</h1>
+            <h1 className="text-3xl font-extrabold text-blue-800">Masuk dengan Akun @smbbtelkom</h1>
             <p className="text-gray-600">
-              Gunakan akun Google Anda untuk mengakses sistem ini.
+              Gunakan akun @smbbtelkom Anda untuk mengakses sistem ini.
             </p>
 
             {user ? (
@@ -70,8 +70,7 @@ export default function Login() {
                   onClick={handleLogin}
                   className="btn btn-outline btn-primary w-full max-w-xs flex items-center justify-center gap-3 transition-all hover:scale-105 hover:shadow-md"
                 >
-                  <img src={Google} alt="Google" className="w-5 h-5" />
-                  <span className="font-medium">Login dengan Google</span>
+                  <span className="font-semibold">Login dengan @smbbtelkom.ac.id</span>
                 </button>
                 <button
                   onClick={handleGuestLogin}
