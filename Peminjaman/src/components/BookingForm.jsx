@@ -73,8 +73,7 @@ export default function BookingForm() {
       const timer = setTimeout(() => {
         setShowAlert(false);
         setStatus('');
-      }, 2000);
-      window.location.href = '/data';
+      }, 3000);
       return () => clearTimeout(timer);
     }
   }, [status]);
