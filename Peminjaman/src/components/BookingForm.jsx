@@ -55,7 +55,6 @@ export default function BookingForm() {
 
       if (res.data.success) {
         setStatus('Ruangan Berhasil Di Booking!');
-        window.location.href = '/data';
       } else {
         setStatus('Ruangan Sudah Terpakai!');
       }
@@ -74,7 +73,8 @@ export default function BookingForm() {
       const timer = setTimeout(() => {
         setShowAlert(false);
         setStatus('');
-      }, 5000);
+      }, 2000);
+      window.location.href = '/data';
       return () => clearTimeout(timer);
     }
   }, [status]);
