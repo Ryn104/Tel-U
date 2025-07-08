@@ -5,6 +5,8 @@ import { supabase } from '../supabaseClient';
 import axios from 'axios';
 
 export default function BookingForm() {
+  const [isLoading, setIsLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     nama: '',
     kontak: '',
@@ -33,7 +35,6 @@ export default function BookingForm() {
       return;
     }
 
-    // ✅ Ambil user yang sedang login
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
@@ -41,11 +42,12 @@ export default function BookingForm() {
       return;
     }
 
-    // ✅ Tambahkan user_id ke payload yang dikirim
     const payload = {
       ...formData,
       user_id: user.id,
     };
+
+    setIsLoading(true); // ⏳ mulai loading
 
     try {
       const res = await axios.post(
@@ -55,14 +57,28 @@ export default function BookingForm() {
 
       if (res.data.success) {
         setStatus('Ruangan Berhasil Di Booking!');
+        setFormData({
+          nama: '',
+          kontak: '',
+          unit: '',
+          ruangan: '',
+          peserta: '',
+          judul: '',
+          waktu: '',
+          selesai: '',
+        });
+
       } else {
         setStatus('Ruangan Sudah Terpakai!');
       }
     } catch (err) {
       setStatus('Terjadi kesalahan saat mengirim.');
       console.error(err);
+    } finally {
+      setIsLoading(false); // ✅ selesai loading
     }
   };
+
 
 
   const [showAlert, setShowAlert] = useState(false);
@@ -195,9 +211,14 @@ export default function BookingForm() {
           </div>
 
           {/* Tombol */}
-          <button type="submit" className="btn btn-primary w-full text-lg mt-2">
-            Kirim Permintaan
+          <button type="submit" className="btn btn-primary w-full text-lg mt-2" disabled={isLoading}>
+            {isLoading ? (
+              <span className="loading loading-spinner loading-md"></span>
+            ) : (
+              'Kirim Permintaan'
+            )}
           </button>
+
         </form>
 
         {/* Alert */}
@@ -206,10 +227,10 @@ export default function BookingForm() {
             <div
               role="alert"
               className={`alert shadow-md text-black rounded-lg ${status.includes('Berhasil')
-                  ? 'alert-success'
-                  : status.includes('Ruangan')
-                    ? 'alert-warning'
-                    : 'alert-error'
+                ? 'alert-success'
+                : status.includes('Ruangan')
+                  ? 'alert-warning'
+                  : 'alert-error'
                 }`}
             >
               {status.includes('Berhasil') ? (
