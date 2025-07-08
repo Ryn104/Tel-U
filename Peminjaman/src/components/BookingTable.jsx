@@ -30,21 +30,21 @@ export default function BookingTable() {
   }, []);
 
   const fetchBookings = async () => {
-  setLoading(true);
-  const { data, error } = await supabase
-    .from('peminjaman_ruang') // <- perhatikan kutipan
-    .select('*')
-    .order('tanggal_peminjaman', { ascending: true })
-    .order('waktu_peminjaman', { ascending: true });
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('peminjaman_ruang') // <- perhatikan kutipan
+      .select('*')
+      .order('tanggal_peminjaman', { ascending: true })
+      .order('waktu_peminjaman', { ascending: true });
 
-  if (error) {
-    console.error("Error fetching data:", error.message);
-  } else {
-    setBookings(data);
-  }
+    if (error) {
+      console.error("Error fetching data:", error.message);
+    } else {
+      setBookings(data);
+    }
 
-  setLoading(false);
-};
+    setLoading(false);
+  };
 
   const handleDeleteClick = (id) => {
     setDeleteId(id);
@@ -209,19 +209,20 @@ export default function BookingTable() {
                       <td>{item.tanggal_peminjaman} {item.waktu_peminjaman}</td>
                       <td>{item.tanggal_selesai} {item.waktu_selesai}</td>
                       <td>
-                        {(user?.id === item.user_id || user?.id === 'aac4ce7e-5c19-4abd-a178-929d1cdd8f82') && (
-                          <div className="flex gap-2">
-                            <button className="btn btn-info btn-xs" onClick={() => {
-                              setEditData({
-                                ...item,
-                                waktu_peminjaman: formatDateTimeLocal(item.tanggal_peminjaman, item.waktu_peminjaman),
-                                waktu_selesai: formatDateTimeLocal(item.tanggal_selesai, item.waktu_selesai),
-                              });
-                              setShowEditModal(true);
-                            }}>Edit</button>
-                            <button className="btn btn-error btn-xs" onClick={() => handleDeleteClick(item.id)}>Hapus</button>
-                          </div>
-                        )}
+                        {(user?.id !== '50bcd3a3-4b94-472e-b012-996f27df045a') &&
+                          (user?.id === item.user_id || user?.id === 'aac4ce7e-5c19-4abd-a178-929d1cdd8f82') && (
+                            <div className="flex gap-2">
+                              <button className="btn btn-info btn-xs" onClick={() => {
+                                setEditData({
+                                  ...item,
+                                  waktu_peminjaman: formatDateTimeLocal(item.tanggal_peminjaman, item.waktu_peminjaman),
+                                  waktu_selesai: formatDateTimeLocal(item.tanggal_selesai, item.waktu_selesai),
+                                });
+                                setShowEditModal(true);
+                              }}>Edit</button>
+                              <button className="btn btn-error btn-xs" onClick={() => handleDeleteClick(item.id)}>Hapus</button>
+                            </div>
+                          )}
                       </td>
                     </tr>
                   ))}
