@@ -15,6 +15,11 @@ export default function BookingTable() {
   const [user, setUser] = useState(null);
   const [filterDate, setFilterDate] = useState('');
   const [filterRuangan, setFilterRuangan] = useState('');
+  const [csvStartDate, setCsvStartDate] = useState('');
+  const [csvEndDate, setCsvEndDate] = useState('');
+  const [showCSVModal, setShowCSVModal] = useState(false);
+
+
 
 
   useEffect(() => {
@@ -104,8 +109,24 @@ export default function BookingTable() {
 
   const downloadCSV = () => {
     if (!bookings || bookings.length === 0) return;
-    const headers = Object.keys(bookings[0]).filter(key => key !== 'id' && key !== 'created_at' && key !== 'user_id');
-    const rows = bookings.map(booking => headers.map(field => `"${String(booking[field] ?? '').replace(/"/g, '""')}"`).join(';'));
+
+    // Ubah string tanggal ke objek Date
+    const start = csvStartDate ? new Date(csvStartDate) : null;
+    const end = csvEndDate ? new Date(csvEndDate) : null;
+
+    // Filter berdasarkan range tanggal
+    const filtered = bookings.filter(booking => {
+      const bookingDate = new Date(booking.tanggal_peminjaman);
+      return (!start || bookingDate >= start) && (!end || bookingDate <= end);
+    });
+
+    if (filtered.length === 0) {
+      alert('Tidak ada data dalam rentang tanggal yang dipilih.');
+      return;
+    }
+
+    const headers = Object.keys(filtered[0]).filter(key => key !== 'id' && key !== 'created_at' && key !== 'user_id');
+    const rows = filtered.map(booking => headers.map(field => `"${String(booking[field] ?? '').replace(/"/g, '""')}"`).join(';'));
     const csvContent = [headers.join(';'), ...rows].join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -116,6 +137,7 @@ export default function BookingTable() {
     link.click();
     document.body.removeChild(link);
   };
+
 
   const formatDateTimeLocal = (date, time) => date && time ? `${date}T${time.slice(0, 5)}` : '';
 
@@ -135,7 +157,7 @@ export default function BookingTable() {
         </h1>
 
         <div className="mb-4 flex flex-col md:flex-row md:justify-between gap-2 items-stretch">
-          <button onClick={downloadCSV} className="btn btn-primary w-full sm:w-auto">
+          <button onClick={() => setShowCSVModal(true)} className="btn btn-primary w-full sm:w-auto">
             Download CSV
           </button>
 
@@ -171,8 +193,43 @@ export default function BookingTable() {
           </div>
         </div>
 
+        {showCSVModal && (
+          <div className="modal modal-open">
+            <div className="modal-box">
+              <h3 className="font-bold text-lg mb-4">Download CSV Berdasarkan Tanggal</h3>
 
+              <div className="flex flex-col gap-4">
+                <input
+                  type="date"
+                  value={csvStartDate}
+                  onChange={(e) => setCsvStartDate(e.target.value)}
+                  className="input input-bordered w-full"
+                  placeholder="Dari tanggal"
+                />
+                <input
+                  type="date"
+                  value={csvEndDate}
+                  onChange={(e) => setCsvEndDate(e.target.value)}
+                  className="input input-bordered w-full"
+                  placeholder="Sampai tanggal"
+                />
+              </div>
 
+              <div className="modal-action mt-6">
+                <button
+                  onClick={() => {
+                    downloadCSV();
+                    setShowCSVModal(false);
+                  }}
+                  className="btn btn-primary"
+                >
+                  Download
+                </button>
+                <button onClick={() => setShowCSVModal(false)} className="btn">Batal</button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading ? (
           <div className='flex justify-center'><span className="loading loading-spinner loading-lg"></span></div>
@@ -194,10 +251,14 @@ export default function BookingTable() {
               </thead>
               <tbody>
                 {bookings
-                  .filter(item =>
-                    (!filterDate || item.tanggal_peminjaman === filterDate) &&
-                    (!filterRuangan || item.ruangan === filterRuangan)
-                  )
+                  .filter(item => {
+                    const bookingEndTime = new Date(`${item.tanggal_selesai}T${item.waktu_selesai}`);
+                    const now = new Date();
+
+                    return bookingEndTime > now && // hanya tampilkan jika belum lewat
+                      (!filterDate || item.tanggal_peminjaman === filterDate) &&
+                      (!filterRuangan || item.ruangan === filterRuangan);
+                  })
                   .map((item, index) => (
                     <tr key={item.id} className='text-center'>
                       <th>{index + 1}</th>
