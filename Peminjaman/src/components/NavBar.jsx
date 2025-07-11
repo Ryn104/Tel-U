@@ -39,7 +39,7 @@ const NavBar = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 inset-x-0 bg-white shadow border-gray-200 border z-50">
+    <div className="fixed bottom-0 inset-x-0 bg-white shadow border-t border-[#ddd] z-50">
       <div className="flex justify-around items-center h-16">
         {/* Link Navigation */}
         {navItems.map((item) => (
@@ -47,10 +47,9 @@ const NavBar = () => {
             key={item.to}
             to={item.to}
             className={({ isActive }) =>
-              `flex flex-col items-center text-xs transition-all ${
-                isActive
-                  ? 'text-blue-600 font-semibold'
-                  : 'text-gray-500 hover:text-blue-600'
+              `flex flex-col items-center text-xs transition-all ${isActive
+                ? 'text-[#E60000] font-semibold' // <-- warna merah aktif
+                : 'text-gray-500 hover:text-[#E60000]' // <-- hover merah juga
               }`
             }
           >
@@ -62,7 +61,7 @@ const NavBar = () => {
         {/* Logout */}
         <button
           onClick={handleLogout}
-          className="flex flex-col items-center text-xs text-gray-500 hover:text-red-600 transition-all"
+          className="flex flex-col items-center text-xs text-gray-500 hover:text-[#E60000] transition-all"
         >
           <svg className="xl:w-6 xl:h-6 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path

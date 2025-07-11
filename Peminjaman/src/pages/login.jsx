@@ -61,12 +61,12 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-tr from-blue-50 to-white flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-tr bg-[#f2f2f2] flex items-center justify-center px-4">
       <div className="flex flex-col lg:flex-row items-center gap-12 max-w-5xl w-full mb-5">
         {/* Card Login */}
         <div className="card w-full max-w-md min-h-[28rem] shadow-2xl bg-white border-gray-200 border rounded-3xl p-6 order-2 lg:order-1">
           <div className="card-body flex flex-col justify-center items-center text-center space-y-6">
-            <h1 className="text-3xl font-extrabold text-blue-800">Masuk dengan Akun Telkom University</h1>
+            <h1 className="text-3xl font-extrabold text-[#002B5B]">Masuk dengan Akun Telkom University</h1>
             <p className="text-gray-600">
               Gunakan akun resmi Telkom University Anda untuk mengakses sistem ini.
             </p>
@@ -87,13 +87,13 @@ export default function Login() {
               <>
                 <button
                   onClick={handleLogin}
-                  className="btn btn-outline btn-primary w-full max-w-xs flex items-center justify-center gap-3 transition-all hover:scale-105 hover:shadow-md"
+                  className="btn btn-outline border-[#E60000] text-[#E60000] hover:bg-[#E60000] hover:text-white w-full max-w-xs flex items-center justify-center gap-3 transition-all hover:scale-105 hover:shadow-md"
                 >
                   <span className="font-semibold">Login Dengan Akun Telkom University</span>
                 </button>
                 <button
                   onClick={handleGuestLogin}
-                  className="btn btn-outline btn-info w-full max-w-xs transition-all hover:scale-105 hover:shadow-md"
+                  className="btn btn-outline border-[#002B5B] text-[#002B5B] hover:bg-[#002B5B] hover:text-white w-full max-w-xs transition-all hover:scale-105 hover:shadow-md"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg"
                     fill="none" viewBox="0 0 24 24" strokeWidth={1.5}
@@ -109,7 +109,7 @@ export default function Login() {
 
         {/* Informasi & Heading */}
         <div className="text-center lg:text-left max-w-md order-1 lg:order-2">
-          <h1 className="text-4xl lg:text-5xl font-bold text-blue-900 leading-tight">
+          <h1 className="text-4xl lg:text-5xl font-bold text-[#002B5B] leading-tight">
             Selamat Datang di Sistem<br />Peminjaman Ruangan!
           </h1>
           <p className="py-6 text-gray-700">

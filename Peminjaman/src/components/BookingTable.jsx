@@ -142,7 +142,7 @@ export default function BookingTable() {
   const formatDateTimeLocal = (date, time) => date && time ? `${date}T${time.slice(0, 5)}` : '';
 
   return (
-    <div className='bg-gradient-to-br from-blue-50 to-white min-h-screen px-4 pt-5 pb-21'>
+    <div className='bg-gradient-to-br bg-[#f2f2f2] min-h-screen px-4 pt-5 pb-21'>
       <div className="w-full max-w-7xl mx-auto shadow-xl bg-white border border-gray-200 rounded-2xl p-6 max-h-4xl">
         {showAlert && (
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-[90%] max-w-md">
@@ -152,12 +152,12 @@ export default function BookingTable() {
           </div>
         )}
 
-        <h1 className="text-3xl xl:text-5xl xl:mb-16 mb-10 mt-5 text-center font-bold text-blue-900">
+        <h1 className="text-3xl xl:text-5xl xl:mb-16 mb-10 mt-5 text-center font-bold text-[#002B5B]">
           Data Peminjaman Ruangan
         </h1>
 
         <div className="mb-4 flex flex-col md:flex-row md:justify-between gap-2 items-stretch">
-          <button onClick={() => setShowCSVModal(true)} className="btn btn-primary w-full sm:w-auto">
+          <button onClick={() => setShowCSVModal(true)} className="btn w-full sm:w-auto bg-[#E60000] hover:bg-[#b80000] text-white border-none">
             Download CSV
           </button>
 
@@ -273,15 +273,25 @@ export default function BookingTable() {
                         {(user?.id !== '50bcd3a3-4b94-472e-b012-996f27df045a') &&
                           (user?.id === item.user_id || user?.id === 'aac4ce7e-5c19-4abd-a178-929d1cdd8f82') && (
                             <div className="flex gap-2">
-                              <button className="btn btn-info btn-xs" onClick={() => {
-                                setEditData({
-                                  ...item,
-                                  waktu_peminjaman: formatDateTimeLocal(item.tanggal_peminjaman, item.waktu_peminjaman),
-                                  waktu_selesai: formatDateTimeLocal(item.tanggal_selesai, item.waktu_selesai),
-                                });
-                                setShowEditModal(true);
-                              }}>Edit</button>
-                              <button className="btn btn-error btn-xs" onClick={() => handleDeleteClick(item.id)}>Hapus</button>
+                              <button
+                                className="btn btn-xs bg-[#002B5B] hover:bg-[#001933] text-white border-none"
+                                onClick={() => {
+                                  setEditData({
+                                    ...item,
+                                    waktu_peminjaman: formatDateTimeLocal(item.tanggal_peminjaman, item.waktu_peminjaman),
+                                    waktu_selesai: formatDateTimeLocal(item.tanggal_selesai, item.waktu_selesai),
+                                  });
+                                  setShowEditModal(true);
+                                }}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                className="btn btn-xs bg-[#E60000] hover:bg-[#b80000] text-white border-none"
+                                onClick={() => handleDeleteClick(item.id)}
+                              >
+                                Hapus
+                              </button>
                             </div>
                           )}
                       </td>
@@ -295,10 +305,16 @@ export default function BookingTable() {
         {showConfirmModal && (
           <div className="modal modal-open">
             <div className="modal-box">
-              <h3 className="font-bold text-lg text-red-600">Konfirmasi Hapus</h3>
+              <h3 className="font-bold text-lg text-[#E60000]">Konfirmasi Hapus</h3>
               <p className="py-4">Apakah kamu yakin ingin menghapus data ini?</p>
               <div className="modal-action">
-                <button onClick={confirmDelete} className="btn btn-error">Ya, Hapus</button>
+                <button
+                  onClick={confirmDelete}
+                  className="btn bg-[#E60000] hover:bg-[#b80000] text-white border-none"
+                >
+                  Ya, Hapus
+                </button>
+
                 <button onClick={() => setShowConfirmModal(false)} className="btn">Batal</button>
               </div>
             </div>
@@ -308,7 +324,7 @@ export default function BookingTable() {
         {showEditModal && editData && (
           <div className="modal modal-open">
             <div className="modal-box max-w-3xl">
-              <h3 className="font-bold text-lg mb-4 text-blue-700">Edit Data Peminjaman</h3>
+              <h3 className="font-bold text-lg mb-4 text-[#002B5B]">Edit Data Peminjaman</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <input type="text" placeholder="Judul" value={editData.judul} onChange={(e) => setEditData({ ...editData, judul: e.target.value })} className="input input-bordered w-full" />
                 <input type="text" placeholder="Nama" value={editData.nama} onChange={(e) => setEditData({ ...editData, nama: e.target.value })} className="input input-bordered w-full" />
@@ -324,7 +340,13 @@ export default function BookingTable() {
                 <input type="datetime-local" value={editData.waktu_selesai} onChange={(e) => setEditData({ ...editData, waktu_selesai: e.target.value })} className="input input-bordered w-full" />
               </div>
               <div className="modal-action mt-6">
-                <button onClick={handleEditSubmit} className="btn btn-primary">Simpan</button>
+                <button
+                  onClick={handleEditSubmit}
+                  className="btn bg-[#002B5B] hover:bg-[#001933] text-white border-none"
+                >
+                  Simpan
+                </button>
+
                 <button onClick={() => setShowEditModal(false)} className="btn">Batal</button>
               </div>
             </div>
