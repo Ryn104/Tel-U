@@ -112,7 +112,7 @@ export default function Login() {
           <h1 className="text-4xl lg:text-5xl font-bold text-[#002B5B] leading-tight">
             Selamat Datang di Sistem<br />Peminjaman Ruangan!
           </h1>
-          <p className="py-6 text-gray-700">
+          <p className="pt-6 text-gray-700">
             Booking ruangan jadi lebih mudah! Cukup login dan pilih ruangan yang kamu butuhkan.
           </p>
         </div>
