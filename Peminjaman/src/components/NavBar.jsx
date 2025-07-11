@@ -39,7 +39,7 @@ const NavBar = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 inset-x-0 bg-white shadow z-50">
+    <div className="fixed bottom-0 inset-x-0 bg-white shadow border-gray-200 border z-50">
       <div className="flex justify-around items-center h-16">
         {/* Link Navigation */}
         {navItems.map((item) => (
