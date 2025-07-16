@@ -18,6 +18,8 @@ export default function BookingTable() {
   const [csvStartDate, setCsvStartDate] = useState('');
   const [csvEndDate, setCsvEndDate] = useState('');
   const [showCSVModal, setShowCSVModal] = useState(false);
+  const [editLoading, setEditLoading] = useState(false); // untuk tombol simpan edit
+
 
   useEffect(() => {
     const getUser = async () => {
@@ -145,47 +147,55 @@ export default function BookingTable() {
   };
 
   const handleEditSubmit = async () => {
-    const waktuStart = new Date(editData.waktu_peminjaman);
-    const waktuEnd = new Date(editData.waktu_selesai);
-    const payload = {
-      ...editData,
-      tanggal_peminjaman: waktuStart.toISOString().split('T')[0],
-      waktu_peminjaman: waktuStart.toTimeString().slice(0, 5),
-      tanggal_selesai: waktuEnd.toISOString().split('T')[0],
-      waktu_selesai: waktuEnd.toTimeString().slice(0, 5),
-      id: editData.id,
-      user_id: user.id,
-    };
-
-    try {
-      const res = await axios.post('https://n8n.srv870769.hstgr.cloud/webhook/edit-booking', payload);
-      if (res.data.success === true) {
-        const { error } = await supabase.from('peminjaman_ruang').update({
-          judul: editData.judul,
-          nama: editData.nama,
-          kontak: editData.kontak,
-          unit: editData.unit,
-          ruangan: editData.ruangan,
-          peserta: editData.peserta,
-          tanggal_peminjaman: payload.tanggal_peminjaman,
-          waktu_peminjaman: payload.waktu_peminjaman,
-          tanggal_selesai: payload.tanggal_selesai,
-          waktu_selesai: payload.waktu_selesai,
-        }).eq('id', editData.id);
-        if (!error) {
-          fetchBookings();
-          setShowEditModal(false);
-          setEditData(null);
-        }
-      } else {
-        setStatus("Ruangan sudah terpakai!");
-        setShowAlert(true);
-        setTimeout(() => setShowAlert(false), 5000);
-      }
-    } catch (err) {
-      alert("Terjadi kesalahan saat mengirim.");
-    }
+  setEditLoading(true); // mulai loading
+  const waktuStart = new Date(editData.waktu_peminjaman);
+  const waktuEnd = new Date(editData.waktu_selesai);
+  const payload = {
+    ...editData,
+    tanggal_peminjaman: waktuStart.toISOString().split('T')[0],
+    waktu_peminjaman: waktuStart.toTimeString().slice(0, 5),
+    tanggal_selesai: waktuEnd.toISOString().split('T')[0],
+    waktu_selesai: waktuEnd.toTimeString().slice(0, 5),
+    id: editData.id,
+    user_id: user.id,
   };
+
+  try {
+    const res = await axios.post('https://n8n.srv870769.hstgr.cloud/webhook/edit-booking', payload);
+    if (res.data.success === true) {
+      const { error } = await supabase.from('peminjaman_ruang').update({
+        judul: editData.judul,
+        nama: editData.nama,
+        kontak: editData.kontak,
+        unit: editData.unit,
+        ruangan: editData.ruangan,
+        peserta: editData.peserta,
+        tanggal_peminjaman: payload.tanggal_peminjaman,
+        waktu_peminjaman: payload.waktu_peminjaman,
+        tanggal_selesai: payload.tanggal_selesai,
+        waktu_selesai: payload.waktu_selesai,
+      }).eq('id', editData.id);
+
+      if (!error) {
+        fetchBookings();
+        setShowEditModal(false);
+        setEditData(null);
+        setStatus("Data berhasil diubah!");
+        setShowAlert(true);
+      }
+    } else {
+      setStatus("Ruangan sudah terpakai!");
+      setShowAlert(true);
+    }
+  } catch (err) {
+    setStatus("Terjadi kesalahan saat mengirim.");
+    setShowAlert(true);
+  } finally {
+    setEditLoading(false); // stop loading
+    setTimeout(() => setShowAlert(false), 5000);
+  }
+};
+
 
   const downloadCSV = () => {
     if (!bookings || bookings.length === 0) return;
@@ -317,7 +327,7 @@ export default function BookingTable() {
           <div className='flex justify-center'><span className="loading loading-spinner loading-lg"></span></div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="table table-xs xl:table-md table-zebra w-full">
+            <table className="table table-xs table-zebra xl:table-md w-full">
               <thead>
                 <tr className='text-center'>
                   <th>#</th>
@@ -346,7 +356,7 @@ export default function BookingTable() {
                       (!filterRuangan || item.ruangan === filterRuangan);
                   })
                   .map((item, index) => (
-                    <tr key={item.id} className='text-center'>
+                    <tr key={item.id} className='text-center hover:bg-gray-100'>
                       <th>{index + 1}</th>
                       <td>{item.judul}</td>
                       <td>{item.nama}</td>
@@ -357,24 +367,31 @@ export default function BookingTable() {
                       <td>{item.tanggal_selesai} {item.waktu_selesai}</td>
                       <td>
                         {item.approval ? (
-                          <span className="badge badge-success">Diterima</span>
+                          <span className="badge badge-outline badge-success rounded-sm">Diterima</span>
                         ) : (
-                          <span className="badge badge-warning">Menunggu</span>
+                          <span className="badge badge-outline badge-warning rounded-sm">Menunggu</span>
                         )}
                       </td>
                       <td>
                         {/* Hanya tampilkan edit/hapus jika user adalah pemilik data ATAU admin */}
                         {user?.id !== '50bcd3a3-4b94-472e-b012-996f27df045a' && (user?.id === item.user_id || isAdmin) && (
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => setEditData(item)}
-                              className="btn btn-xs bg-blue-500 text-white"
-                            >
-                              Edit
-                            </button>
+                             <button
+                                className="btn btn-xs bg-[#002B5B] hover:bg-[#001933] text-white border-none"
+                                onClick={() => {
+                                  setEditData({
+                                    ...item,
+                                    waktu_peminjaman: formatDateTimeLocal(item.tanggal_peminjaman, item.waktu_peminjaman),
+                                    waktu_selesai: formatDateTimeLocal(item.tanggal_selesai, item.waktu_selesai),
+                                  });
+                                  setShowEditModal(true);
+                                }}
+                              >
+                                Edit
+                              </button>
                             <button
                               onClick={() => handleDeleteClick(item.id)}
-                              className="btn btn-xs bg-red-500 text-white"
+                              className="btn btn-xs bg-[#E60000] hover:bg-[#b80000] text-white"
                             >
                               Hapus
                             </button>
@@ -383,24 +400,24 @@ export default function BookingTable() {
                       </td>
 
                       {/* Hanya tampilkan approve/reject untuk admin */}
+                      <td>
                       {isAdmin && !item.approval && (
-                        <td>
-                          <div className="mt-2 flex gap-2">
+                          <div className="flex gap-2">
                             <button
                               onClick={() => handleApprove(item.id)}
-                              className="btn btn-xs bg-green-500 text-white"
+                              className="btn btn-xs bg-green-700 hover:bg-green-900 text-white"
                             >
                               Approve
                             </button>
                             <button
                               onClick={() => handleReject(item.id)}
-                              className="btn btn-xs bg-orange-500 text-white"
+                              className="btn btn-xs bg-orange-600 hover:bg-orange-800 text-white"
                             >
                               Reject
                             </button>
                           </div>
-                        </td>
                       )}
+                      </td>
                     </tr>
                   ))}
               </tbody>
@@ -447,11 +464,20 @@ export default function BookingTable() {
               </div>
               <div className="modal-action mt-6">
                 <button
-                  onClick={handleEditSubmit}
-                  className="btn bg-[#002B5B] hover:bg-[#001933] text-white border-none"
-                >
-                  Simpan
-                </button>
+  onClick={handleEditSubmit}
+  className="btn bg-[#002B5B] hover:bg-[#001933] text-white border-none"
+  disabled={editLoading}
+>
+  {editLoading ? (
+    <>
+      <span className="loading loading-spinner loading-xs"></span>
+      Menyimpan...
+    </>
+  ) : (
+    "Simpan"
+  )}
+</button>
+
 
                 <button onClick={() => setShowEditModal(false)} className="btn">Batal</button>
               </div>
