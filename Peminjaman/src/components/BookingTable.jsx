@@ -19,9 +19,6 @@ export default function BookingTable() {
   const [csvEndDate, setCsvEndDate] = useState('');
   const [showCSVModal, setShowCSVModal] = useState(false);
 
-
-
-
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -37,17 +34,12 @@ export default function BookingTable() {
   const fetchBookings = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('peminjaman_ruang') // <- perhatikan kutipan
-      .select('*')
-      .order('tanggal_peminjaman', { ascending: true })
-      .order('waktu_peminjaman', { ascending: true });
+      .from('peminjaman_ruang')
+      .select('*, user_id') // Pastikan user_id di-select
+      .order('tanggal_peminjaman', { ascending: true });
 
-    if (error) {
-      console.error("Error fetching data:", error.message);
-    } else {
-      setBookings(data);
-    }
-
+    if (error) console.error("Error:", error);
+    else setBookings(data);
     setLoading(false);
   };
 
@@ -62,6 +54,94 @@ export default function BookingTable() {
     if (!error) fetchBookings();
     setShowConfirmModal(false);
     setDeleteId(null);
+  };
+
+  const handleApprove = async (bookingId) => {
+    try {
+      // Update approval status in database
+      const { error } = await supabase
+        .from('peminjaman_ruang')
+        .update({ approval: true })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+
+      // Send approval to n8n
+      const booking = bookings.find(b => b.id === bookingId);
+      const res = await axios.post('https://n8n.srv870769.hstgr.cloud/webhook/approve', {
+        ...booking,
+        approval: true
+      });
+
+      if (res.data.success) {
+        setStatus("Booking berhasil disetujui!");
+        setShowAlert(true);
+        fetchBookings();
+      } else {
+        throw new Error("Approval failed in n8n");
+      }
+    } catch (error) {
+      console.error("Approval error:", error);
+      setStatus("Gagal menyetujui booking");
+      setShowAlert(true);
+    } finally {
+      setTimeout(() => setShowAlert(false), 5000);
+    }
+  };
+
+  const handleReject = async (bookingId) => {
+    try {
+      const booking = bookings.find(b => b.id === bookingId);
+
+      // Pertama, coba kirim ke n8n
+      const res = await axios.post(
+        'https://n8n.srv870769.hstgr.cloud/webhook/reject',
+        {
+          ...booking,
+          approval: false
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      if (res.data.success) {
+        // Jika n8n merespon sukses, baru hapus dari database
+        const { error } = await supabase
+          .from('peminjaman_ruang')
+          .delete()
+          .eq('id', bookingId);
+
+        if (error) throw error;
+
+        setStatus("Booking berhasil ditolak!");
+        setShowAlert(true);
+        fetchBookings();
+      } else {
+        throw new Error("Gagal di n8n");
+      }
+    } catch (error) {
+      console.error("Rejection error:", error);
+      setStatus("Gagal menolak booking: " + (error.response?.data?.message || error.message));
+      setShowAlert(true);
+
+      // Fallback: Hapus langsung jika n8n tidak merespon
+      if (error.code === 'ERR_NETWORK' || error.response?.status === 404) {
+        const { error: supabaseError } = await supabase
+          .from('peminjaman_ruang')
+          .delete()
+          .eq('id', bookingId);
+
+        if (!supabaseError) {
+          setStatus("Booking ditolak (fallback mode)");
+          fetchBookings();
+        }
+      }
+    } finally {
+      setTimeout(() => setShowAlert(false), 5000);
+    }
   };
 
   const handleEditSubmit = async () => {
@@ -110,11 +190,9 @@ export default function BookingTable() {
   const downloadCSV = () => {
     if (!bookings || bookings.length === 0) return;
 
-    // Ubah string tanggal ke objek Date
     const start = csvStartDate ? new Date(csvStartDate) : null;
     const end = csvEndDate ? new Date(csvEndDate) : null;
 
-    // Filter berdasarkan range tanggal
     const filtered = bookings.filter(booking => {
       const bookingDate = new Date(booking.tanggal_peminjaman);
       return (!start || bookingDate >= start) && (!end || bookingDate <= end);
@@ -139,14 +217,18 @@ export default function BookingTable() {
   };
 
 
+
   const formatDateTimeLocal = (date, time) => date && time ? `${date}T${time.slice(0, 5)}` : '';
+
+  // Check if user is the specific admin
+  const isAdmin = user?.id === 'aac4ce7e-5c19-4abd-a178-929d1cdd8f82';
 
   return (
     <div className='bg-gradient-to-br bg-[#f2f2f2] min-h-screen px-4 pt-5 pb-21'>
       <div className="w-full max-w-7xl mx-auto shadow-xl bg-white border border-gray-200 rounded-2xl p-6 max-h-4xl">
         {showAlert && (
           <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-[90%] max-w-md">
-            <div className={`alert ${status.includes('Berhasil') ? 'alert-success' : 'alert-warning'} shadow-lg`}>
+            <div className={`alert ${status.includes('berhasil') ? 'alert-success' : 'alert-warning'} shadow-lg`}>
               <span>{status}</span>
             </div>
           </div>
@@ -246,7 +328,11 @@ export default function BookingTable() {
                   <th>Peserta</th>
                   <th>Peminjaman</th>
                   <th className='px-5'>Selesai</th>
+                  <th>Status</th>
                   <th>Action</th>
+                  {isAdmin && (
+                    <th>Approval</th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -270,31 +356,51 @@ export default function BookingTable() {
                       <td>{item.tanggal_peminjaman} {item.waktu_peminjaman}</td>
                       <td>{item.tanggal_selesai} {item.waktu_selesai}</td>
                       <td>
-                        {(user?.id !== '50bcd3a3-4b94-472e-b012-996f27df045a') &&
-                          (user?.id === item.user_id || user?.id === 'aac4ce7e-5c19-4abd-a178-929d1cdd8f82') && (
-                            <div className="flex gap-2">
-                              <button
-                                className="btn btn-xs bg-[#002B5B] hover:bg-[#001933] text-white border-none"
-                                onClick={() => {
-                                  setEditData({
-                                    ...item,
-                                    waktu_peminjaman: formatDateTimeLocal(item.tanggal_peminjaman, item.waktu_peminjaman),
-                                    waktu_selesai: formatDateTimeLocal(item.tanggal_selesai, item.waktu_selesai),
-                                  });
-                                  setShowEditModal(true);
-                                }}
-                              >
-                                Edit
-                              </button>
-                              <button
-                                className="btn btn-xs bg-[#E60000] hover:bg-[#b80000] text-white border-none"
-                                onClick={() => handleDeleteClick(item.id)}
-                              >
-                                Hapus
-                              </button>
-                            </div>
-                          )}
+                        {item.approval ? (
+                          <span className="badge badge-success">Diterima</span>
+                        ) : (
+                          <span className="badge badge-warning">Menunggu</span>
+                        )}
                       </td>
+                      <td>
+                        {/* Hanya tampilkan edit/hapus jika user adalah pemilik data ATAU admin */}
+                        {user?.id !== '50bcd3a3-4b94-472e-b012-996f27df045a' && (user?.id === item.user_id || isAdmin) && (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setEditData(item)}
+                              className="btn btn-xs bg-blue-500 text-white"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(item.id)}
+                              className="btn btn-xs bg-red-500 text-white"
+                            >
+                              Hapus
+                            </button>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Hanya tampilkan approve/reject untuk admin */}
+                      {isAdmin && !item.approval && (
+                        <td>
+                          <div className="mt-2 flex gap-2">
+                            <button
+                              onClick={() => handleApprove(item.id)}
+                              className="btn btn-xs bg-green-500 text-white"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleReject(item.id)}
+                              className="btn btn-xs bg-orange-500 text-white"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
               </tbody>
