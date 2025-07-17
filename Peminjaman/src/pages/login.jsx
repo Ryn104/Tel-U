@@ -27,10 +27,43 @@ export default function Login() {
         }
 
         setUser(user);
+        if (user) {
+          console.log('🔍 Cek user:', user);
+          // Cek apakah user sudah ada di user_profiles
+          const { data: existingUser, error: findError } = await supabase
+            .from('user_profiles')
+            .select('id') // cukup ambil 1 kolom saja untuk cek keberadaan
+            .eq('uid', user.id)
+            .maybeSingle();
+
+          if (findError) {
+            console.error('❌ Error saat cek user:', findError);
+          } else if (!existingUser) {
+            // 🔹 Jika belum ada → INSERT data baru
+            const { error: insertError } = await supabase.from('user_profiles').insert({
+              uid: user.id,
+              email: user.email,
+              name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+              created: new Date(),
+              last_online: new Date(),
+            });
+
+            if (insertError) console.error('❌ Gagal insert:', insertError);
+            else console.log('✅ User baru berhasil disimpan');
+          } else {
+            // 🔸 Jika sudah ada → UPDATE last_online saja
+            const { error: updateError } = await supabase
+              .from('user_profiles')
+              .update({ last_online: new Date() })
+              .eq('uid', user.id);
+
+            if (updateError) console.error('❌ Gagal update last_online:', updateError);
+            else console.log('✅ last_online diperbarui');
+          }
+        }
         window.location.href = '/home';
       }
     };
-
     checkUser();
   }, []);
 
@@ -122,10 +155,10 @@ export default function Login() {
           <div
             role="alert"
             className={`alert shadow-md text-black rounded-lg ${status.includes('Berhasil')
-                ? 'alert-success'
-                : status.includes('Ruangan')
-                  ? 'alert-warning'
-                  : 'alert-error'
+              ? 'alert-success'
+              : status.includes('Ruangan')
+                ? 'alert-warning'
+                : 'alert-error'
               }`}
           >
             {status.includes('Berhasil') ? (
