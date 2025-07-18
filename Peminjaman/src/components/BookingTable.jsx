@@ -2,6 +2,10 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../supabaseClient';
 import axios from 'axios';
+import dayjs from 'dayjs';
+import 'dayjs/locale/id';
+
+dayjs.locale('id');
 
 export default function BookingTable() {
   const [bookings, setBookings] = useState([]);
@@ -18,7 +22,12 @@ export default function BookingTable() {
   const [csvStartDate, setCsvStartDate] = useState('');
   const [csvEndDate, setCsvEndDate] = useState('');
   const [showCSVModal, setShowCSVModal] = useState(false);
-  const [editLoading, setEditLoading] = useState(false); // untuk tombol simpan edit
+  const [editLoading, setEditLoading] = useState(false);
+  const [detailData, setDetailData] = useState(null);
+  const [loadingApproveId, setLoadingApproveId] = useState(null);
+  const [loadingRejectId, setLoadingRejectId] = useState(null);
+
+
 
 
   useEffect(() => {
@@ -59,6 +68,7 @@ export default function BookingTable() {
   };
 
   const handleApprove = async (bookingId) => {
+    setLoadingApproveId(bookingId);
     try {
       // Update approval status in database
       const { error } = await supabase
@@ -87,11 +97,13 @@ export default function BookingTable() {
       setStatus("Gagal menyetujui booking");
       setShowAlert(true);
     } finally {
+      setLoadingApproveId(null);
       setTimeout(() => setShowAlert(false), 5000);
     }
   };
 
   const handleReject = async (bookingId) => {
+    setLoadingRejectId(bookingId);
     try {
       const booking = bookings.find(b => b.id === bookingId);
 
@@ -142,59 +154,60 @@ export default function BookingTable() {
         }
       }
     } finally {
+      setLoadingRejectId(null);
       setTimeout(() => setShowAlert(false), 5000);
     }
   };
 
   const handleEditSubmit = async () => {
-  setEditLoading(true); // mulai loading
-  const waktuStart = new Date(editData.waktu_peminjaman);
-  const waktuEnd = new Date(editData.waktu_selesai);
-  const payload = {
-    ...editData,
-    tanggal_peminjaman: waktuStart.toISOString().split('T')[0],
-    waktu_peminjaman: waktuStart.toTimeString().slice(0, 5),
-    tanggal_selesai: waktuEnd.toISOString().split('T')[0],
-    waktu_selesai: waktuEnd.toTimeString().slice(0, 5),
-    id: editData.id,
-    user_id: user.id,
-  };
+    setEditLoading(true); // mulai loading
+    const waktuStart = new Date(editData.waktu_peminjaman);
+    const waktuEnd = new Date(editData.waktu_selesai);
+    const payload = {
+      ...editData,
+      tanggal_peminjaman: waktuStart.toISOString().split('T')[0],
+      waktu_peminjaman: waktuStart.toTimeString().slice(0, 5),
+      tanggal_selesai: waktuEnd.toISOString().split('T')[0],
+      waktu_selesai: waktuEnd.toTimeString().slice(0, 5),
+      id: editData.id,
+      user_id: user.id,
+    };
 
-  try {
-    const res = await axios.post('https://n8n.srv870769.hstgr.cloud/webhook/edit-booking', payload);
-    if (res.data.success === true) {
-      const { error } = await supabase.from('peminjaman_ruang').update({
-        judul: editData.judul,
-        nama: editData.nama,
-        kontak: editData.kontak,
-        unit: editData.unit,
-        ruangan: editData.ruangan,
-        peserta: editData.peserta,
-        tanggal_peminjaman: payload.tanggal_peminjaman,
-        waktu_peminjaman: payload.waktu_peminjaman,
-        tanggal_selesai: payload.tanggal_selesai,
-        waktu_selesai: payload.waktu_selesai,
-      }).eq('id', editData.id);
+    try {
+      const res = await axios.post('https://n8n.srv870769.hstgr.cloud/webhook/edit-booking', payload);
+      if (res.data.success === true) {
+        const { error } = await supabase.from('peminjaman_ruang').update({
+          judul: editData.judul,
+          nama: editData.nama,
+          kontak: editData.kontak,
+          unit: editData.unit,
+          ruangan: editData.ruangan,
+          peserta: editData.peserta,
+          tanggal_peminjaman: payload.tanggal_peminjaman,
+          waktu_peminjaman: payload.waktu_peminjaman,
+          tanggal_selesai: payload.tanggal_selesai,
+          waktu_selesai: payload.waktu_selesai,
+        }).eq('id', editData.id);
 
-      if (!error) {
-        fetchBookings();
-        setShowEditModal(false);
-        setEditData(null);
-        setStatus("Data berhasil diubah!");
+        if (!error) {
+          fetchBookings();
+          setShowEditModal(false);
+          setEditData(null);
+          setStatus("Data berhasil diubah!");
+          setShowAlert(true);
+        }
+      } else {
+        setStatus("Ruangan sudah terpakai!");
         setShowAlert(true);
       }
-    } else {
-      setStatus("Ruangan sudah terpakai!");
+    } catch (err) {
+      setStatus("Terjadi kesalahan saat mengirim.");
       setShowAlert(true);
+    } finally {
+      setEditLoading(false); // stop loading
+      setTimeout(() => setShowAlert(false), 5000);
     }
-  } catch (err) {
-    setStatus("Terjadi kesalahan saat mengirim.");
-    setShowAlert(true);
-  } finally {
-    setEditLoading(false); // stop loading
-    setTimeout(() => setShowAlert(false), 5000);
-  }
-};
+  };
 
 
   const downloadCSV = () => {
@@ -229,6 +242,14 @@ export default function BookingTable() {
 
 
   const formatDateTimeLocal = (date, time) => date && time ? `${date}T${time.slice(0, 5)}` : '';
+  const tanggalMulai = detailData
+    ? dayjs(`${detailData.tanggal_peminjaman}T${detailData.waktu_peminjaman}`).locale('id')
+    : null;
+  const tanggalSelesai = detailData
+    ? dayjs(`${detailData.tanggal_selesai}T${detailData.waktu_selesai}`).locale('id')
+    : null;
+
+
 
   // Check if user is the specific admin
   const isAdmin = user?.id === 'aac4ce7e-5c19-4abd-a178-929d1cdd8f82';
@@ -337,7 +358,7 @@ export default function BookingTable() {
                   <th>Ruangan</th>
                   <th>Peserta</th>
                   <th>Peminjaman</th>
-                  <th className='px-5'>Selesai</th>
+                  <th className='px-8'>Selesai</th>
                   <th>Status</th>
                   <th>Action</th>
                   {isAdmin && (
@@ -356,15 +377,30 @@ export default function BookingTable() {
                       (!filterRuangan || item.ruangan === filterRuangan);
                   })
                   .map((item, index) => (
-                    <tr key={item.id} className='text-center hover:bg-gray-100'>
+                    <tr
+                      key={item.id}
+                      className='text-center hover:bg-gray-100 cursor-pointer'
+                      onClick={() => {
+                        setDetailData(item);
+                        document.getElementById('detail_modal').showModal();
+                      }}
+                    >
                       <th>{index + 1}</th>
                       <td>{item.judul}</td>
                       <td>{item.nama}</td>
                       <td>{item.unit}</td>
                       <td>{item.ruangan}</td>
                       <td>{item.peserta}</td>
-                      <td>{item.tanggal_peminjaman} {item.waktu_peminjaman}</td>
-                      <td>{item.tanggal_selesai} {item.waktu_selesai}</td>
+                      <td>
+                        {item.tanggal_peminjaman &&
+                          dayjs(item.tanggal_peminjaman).locale('id').format('DD-MM-YYYY')}<br/>
+                        {item.waktu_peminjaman} WIB
+                      </td>
+                      <td>
+                        {item.tanggal_selesai &&
+                          dayjs(item.tanggal_selesai).locale('id').format('DD-MM-YYYY')}<br/>
+                        {item.waktu_selesai} WIB
+                      </td>
                       <td>
                         {item.approval ? (
                           <span className="badge badge-outline badge-success rounded-sm">Diterima</span>
@@ -376,21 +412,25 @@ export default function BookingTable() {
                         {/* Hanya tampilkan edit/hapus jika user adalah pemilik data ATAU admin */}
                         {user?.id !== '50bcd3a3-4b94-472e-b012-996f27df045a' && (user?.id === item.user_id || isAdmin) && (
                           <div className="flex gap-2">
-                             <button
-                                className="btn btn-xs bg-[#002B5B] hover:bg-[#001933] text-white border-none"
-                                onClick={() => {
-                                  setEditData({
-                                    ...item,
-                                    waktu_peminjaman: formatDateTimeLocal(item.tanggal_peminjaman, item.waktu_peminjaman),
-                                    waktu_selesai: formatDateTimeLocal(item.tanggal_selesai, item.waktu_selesai),
-                                  });
-                                  setShowEditModal(true);
-                                }}
-                              >
-                                Edit
-                              </button>
                             <button
-                              onClick={() => handleDeleteClick(item.id)}
+                              className="btn btn-xs bg-[#002B5B] hover:bg-[#001933] text-white border-none"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditData({
+                                  ...item,
+                                  waktu_peminjaman: formatDateTimeLocal(item.tanggal_peminjaman, item.waktu_peminjaman),
+                                  waktu_selesai: formatDateTimeLocal(item.tanggal_selesai, item.waktu_selesai),
+                                });
+                                setShowEditModal(true);
+                              }}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteClick(item.id);
+                              }}
                               className="btn btn-xs bg-[#E60000] hover:bg-[#b80000] text-white"
                             >
                               Hapus
@@ -398,27 +438,44 @@ export default function BookingTable() {
                           </div>
                         )}
                       </td>
-
-                      {/* Hanya tampilkan approve/reject untuk admin */}
-                      <td>
-                      {isAdmin && !item.approval && (
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleApprove(item.id)}
-                              className="btn btn-xs bg-green-700 hover:bg-green-900 text-white"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleReject(item.id)}
-                              className="btn btn-xs bg-orange-600 hover:bg-orange-800 text-white"
-                            >
-                              Reject
-                            </button>
-                          </div>
+                      {isAdmin && (
+                        <td onClick={(e) => e.stopPropagation()}>
+                          {!item.approval && (
+                            <div className="flex gap-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleApprove(item.id);
+                                }}
+                                className="btn btn-xs bg-green-700 hover:bg-green-900 text-white"
+                                disabled={loadingApproveId === item.id}
+                              >
+                                {loadingApproveId === item.id ? (
+                                  <span className="loading loading-spinner loading-xs"></span>
+                                ) : (
+                                  'Approve'
+                                )}
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleReject(item.id);
+                                }}
+                                className="btn btn-xs bg-orange-600 hover:bg-orange-800 text-white"
+                                disabled={loadingRejectId === item.id}
+                              >
+                                {loadingRejectId === item.id ? (
+                                  <span className="loading loading-spinner loading-xs"></span>
+                                ) : (
+                                  'Reject'
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </td>
                       )}
-                      </td>
                     </tr>
+
                   ))}
               </tbody>
             </table>
@@ -464,19 +521,19 @@ export default function BookingTable() {
               </div>
               <div className="modal-action mt-6">
                 <button
-  onClick={handleEditSubmit}
-  className="btn bg-[#002B5B] hover:bg-[#001933] text-white border-none"
-  disabled={editLoading}
->
-  {editLoading ? (
-    <>
-      <span className="loading loading-spinner loading-xs"></span>
-      Menyimpan...
-    </>
-  ) : (
-    "Simpan"
-  )}
-</button>
+                  onClick={handleEditSubmit}
+                  className="btn bg-[#002B5B] hover:bg-[#001933] text-white border-none"
+                  disabled={editLoading}
+                >
+                  {editLoading ? (
+                    <>
+                      <span className="loading loading-spinner loading-xs"></span>
+                      Menyimpan...
+                    </>
+                  ) : (
+                    "Simpan"
+                  )}
+                </button>
 
 
                 <button onClick={() => setShowEditModal(false)} className="btn">Batal</button>
@@ -484,6 +541,104 @@ export default function BookingTable() {
             </div>
           </div>
         )}
+        <dialog id="detail_modal" className="modal modal-bottom sm:modal-middle">
+          <div className="modal-box max-w-2xl bg-white rounded-xl shadow-lg">
+            {detailData && (
+              <div className="mb-6 flex justify-between">
+                <h3 className="text-2xl font-bold text-[#002B5B] flex items-center gap-2">
+                  Detail Peminjaman
+                </h3>
+                {detailData.approval ? (
+                  <span className="badge badge-outline badge-success rounded-sm gap-2">Diterima</span>
+                ) : (
+                  <span className="badge badge-outline badge-warning rounded-sm gap-2">Menunggu</span>
+                )}
+              </div>
+            )}
+
+            {detailData && (
+              <div className="overflow-x-auto">
+                <table className="table table-zebra w-full text-sm">
+                  <tbody>
+                    <tr>
+                      <th className="text-start w-1/3">📌 Judul</th>
+                      <td>{detailData.judul}</td>
+                    </tr>
+                    <tr>
+                      <th className="text-start">👤 Nama</th>
+                      <td>{detailData.nama}</td>
+                    </tr>
+                    <tr>
+                      <th className="text-start">📞 Kontak</th>
+                      <td>{detailData.kontak}</td>
+                    </tr>
+                    <tr>
+                      <th className="text-start">🏢 Unit</th>
+                      <td>{detailData.unit}</td>
+                    </tr>
+                    <tr>
+                      <th className="text-start">🏛️ Ruangan</th>
+                      <td>{detailData.ruangan}</td>
+                    </tr>
+                    <tr>
+                      <th className="text-start">👥 Peserta</th>
+                      <td>{detailData.peserta} Peserta</td>
+                    </tr>
+                    <tr>
+                      <th className="text-start">
+                        <div className='block'>
+                          <div>🕒 Mulai </div>
+                          <div>- Tanggal</div>
+                          <div>- Waktu</div>
+                        </div>
+                      </th>
+                      <td>
+                        {tanggalMulai && (
+                          <div className='block'>
+                            <div className="text-transparent">
+                              -
+                            </div>
+                            <div>{tanggalMulai.format('dddd')}, {tanggalMulai.format('DD-MMMM-YYYY')} </div>
+                            <div>{detailData.waktu_peminjaman} WIB</div>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                    <tr>
+                      <th className="text-start">
+                        <div className='block'>
+                          <div>🕒 Selesai </div>
+                          <div>- Tanggal</div>
+                          <div>- Waktu</div>
+                        </div>
+                      </th>
+                      <td>
+                        {tanggalSelesai && (
+                          <div className='block'>
+                            <div className="text-transparent">
+                              -
+                            </div>
+                            <div>{tanggalSelesai.format('dddd')}, {tanggalSelesai.format('DD-MMMM-YYYY')} </div>
+                            <div>{detailData.waktu_selesai} WIB</div>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="modal-action mt-6">
+              <form method="dialog">
+                <button className="btn btn-outline btn-primary">Tutup</button>
+              </form>
+            </div>
+          </div>
+        </dialog>
+
+
+
       </div>
     </div>
   );
