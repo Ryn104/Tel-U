@@ -23,9 +23,14 @@ export default function BookingTable() {
   const [csvEndDate, setCsvEndDate] = useState('');
   const [showCSVModal, setShowCSVModal] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
+  const [loadingDeleteId, setLoadingDeleteId] = useState(null);
   const [detailData, setDetailData] = useState(null);
   const [loadingApproveId, setLoadingApproveId] = useState(null);
   const [loadingRejectId, setLoadingRejectId] = useState(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [rejectTargetId, setRejectTargetId] = useState(null);
+
 
 
 
@@ -59,12 +64,46 @@ export default function BookingTable() {
     setShowConfirmModal(true);
   };
 
-  const confirmDelete = async () => {
-    if (!deleteId) return;
-    const { error } = await supabase.from('peminjaman_ruang').delete().eq('id', deleteId);
-    if (!error) fetchBookings();
-    setShowConfirmModal(false);
-    setDeleteId(null);
+  const handleDelete = async (id) => {
+    setLoadingDeleteId(id);
+    try {
+      const booking = bookings.find((b) => b.id === id);
+      if (!booking) throw new Error("Booking tidak ditemukan");
+
+      // ✅ Panggil webhook n8n
+      await axios.post(
+        'https://n8n.srv870769.hstgr.cloud/webhook/hapus',
+        {
+          ...booking,
+          id: id,
+          deleted_at: new Date().toISOString(),
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+      const { error } = await supabase
+        .from('peminjaman_ruang')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setStatus("Data berhasil dihapus.");
+      setShowAlert(true);
+      fetchBookings();
+    } catch (error) {
+      console.error("Gagal menghapus:", error);
+      setStatus("Gagal menghapus data.");
+      setShowAlert(true);
+    } finally {
+      setLoadingDeleteId(null);
+      setDeleteId(null);
+      setShowConfirmModal(false);
+      setTimeout(() => setShowAlert(false), 4000);
+    }
   };
 
   const handleApprove = async (bookingId) => {
@@ -102,17 +141,21 @@ export default function BookingTable() {
     }
   };
 
-  const handleReject = async (bookingId) => {
+  const handleReject = async (bookingId, reason) => {
     setLoadingRejectId(bookingId);
     try {
       const booking = bookings.find(b => b.id === bookingId);
 
-      // Pertama, coba kirim ke n8n
+      if (!booking) {
+        throw new Error(`Booking dengan ID ${bookingId} tidak ditemukan`);
+      }
+
       const res = await axios.post(
         'https://n8n.srv870769.hstgr.cloud/webhook/reject',
         {
           ...booking,
-          approval: false
+          approval: false,
+          reason: reason
         },
         {
           headers: {
@@ -122,7 +165,6 @@ export default function BookingTable() {
       );
 
       if (res.data.success) {
-        // Jika n8n merespon sukses, baru hapus dari database
         const { error } = await supabase
           .from('peminjaman_ruang')
           .delete()
@@ -140,24 +182,16 @@ export default function BookingTable() {
       console.error("Rejection error:", error);
       setStatus("Gagal menolak booking: " + (error.response?.data?.message || error.message));
       setShowAlert(true);
-
-      // Fallback: Hapus langsung jika n8n tidak merespon
-      if (error.code === 'ERR_NETWORK' || error.response?.status === 404) {
-        const { error: supabaseError } = await supabase
-          .from('peminjaman_ruang')
-          .delete()
-          .eq('id', bookingId);
-
-        if (!supabaseError) {
-          setStatus("Booking ditolak (fallback mode)");
-          fetchBookings();
-        }
-      }
     } finally {
       setLoadingRejectId(null);
+      setRejectReason('');
+      setRejectTargetId(null);
+      setShowRejectModal(false);
       setTimeout(() => setShowAlert(false), 5000);
     }
   };
+
+
 
   const handleEditSubmit = async () => {
     setEditLoading(true); // mulai loading
@@ -393,12 +427,12 @@ export default function BookingTable() {
                       <td>{item.peserta}</td>
                       <td>
                         {item.tanggal_peminjaman &&
-                          dayjs(item.tanggal_peminjaman).locale('id').format('DD-MM-YYYY')}<br/>
+                          dayjs(item.tanggal_peminjaman).locale('id').format('DD-MM-YYYY')}<br />
                         {item.waktu_peminjaman} WIB
                       </td>
                       <td>
                         {item.tanggal_selesai &&
-                          dayjs(item.tanggal_selesai).locale('id').format('DD-MM-YYYY')}<br/>
+                          dayjs(item.tanggal_selesai).locale('id').format('DD-MM-YYYY')}<br />
                         {item.waktu_selesai} WIB
                       </td>
                       <td>
@@ -459,17 +493,14 @@ export default function BookingTable() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleReject(item.id);
+                                  setRejectTargetId(item.id);
+                                  setShowRejectModal(true);
                                 }}
                                 className="btn btn-xs bg-orange-600 hover:bg-orange-800 text-white"
-                                disabled={loadingRejectId === item.id}
                               >
-                                {loadingRejectId === item.id ? (
-                                  <span className="loading loading-spinner loading-xs"></span>
-                                ) : (
-                                  'Reject'
-                                )}
+                                Reject
                               </button>
+
                             </div>
                           )}
                         </td>
@@ -489,11 +520,13 @@ export default function BookingTable() {
               <p className="py-4">Apakah kamu yakin ingin menghapus data ini?</p>
               <div className="modal-action">
                 <button
-                  onClick={confirmDelete}
-                  className="btn bg-[#E60000] hover:bg-[#b80000] text-white border-none"
+                  className={`btn bg-red-600 text-white ${loadingDeleteId ? 'loading' : ''}`}
+                  onClick={() => handleDelete(deleteId)}
+                  disabled={loadingDeleteId !== null}
                 >
-                  Ya, Hapus
+                  {loadingDeleteId ? 'Menghapus...' : 'Ya, Hapus!'}
                 </button>
+
 
                 <button onClick={() => setShowConfirmModal(false)} className="btn">Batal</button>
               </div>
@@ -541,6 +574,45 @@ export default function BookingTable() {
             </div>
           </div>
         )}
+
+        {showRejectModal && (
+          <div className="modal modal-open">
+            <div className="modal-box">
+              <h3 className="font-bold text-lg text-orange-600">Tolak Peminjaman</h3>
+              <p className="mb-4">Berikan alasan penolakan:</p>
+              <textarea
+                className="textarea textarea-bordered w-full"
+                rows="4"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Contoh: Ruangan sudah digunakan untuk acara lain."
+              ></textarea>
+
+              <div className="modal-action">
+                <button
+                  className={`btn bg-orange-600 text-white ${loadingRejectId ? 'loading' : ''}`}
+                  onClick={() => handleReject(rejectTargetId, rejectReason)}
+                  disabled={!rejectReason.trim() || loadingRejectId}
+                >
+                  {loadingRejectId ? 'Mengirim...' : 'Kirim Penolakan'}
+                </button>
+
+                <button
+                  className="btn"
+                  onClick={() => {
+                    setShowRejectModal(false);
+                    setRejectReason('');
+                    setRejectTargetId(null);
+                  }}
+                >
+                  Batal
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+
         <dialog id="detail_modal" className="modal modal-bottom sm:modal-middle">
           <div className="modal-box max-w-2xl bg-white rounded-xl shadow-lg">
             {detailData && (
