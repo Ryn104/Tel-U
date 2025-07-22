@@ -97,7 +97,7 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-tr bg-[#f2f2f2] flex items-center justify-center px-4">
       <div className="flex flex-col lg:flex-row items-center gap-12 max-w-5xl w-full mb-5">
         {/* Card Login */}
-        <div className="card w-full max-w-md min-h-[24rem] shadow-2xl bg-white border-gray-200 border rounded-3xl p-6 order-2 lg:order-1 mt-[-2rem]">
+        <div className="card w-full max-w-md min-h-[22rem] shadow-2xl bg-white border-gray-200 border rounded-3xl p-3 lg:p-6 order-2 lg:order-1 mt-[-2rem]">
           <div className="card-body flex flex-col justify-center items-center text-center space-y-6">
             <h1 className="text-2xl lg:text-3xl font-extrabold text-[#002B5B]">Masuk dengan Akun Telkom University</h1>
             <p className="text-gray-600">
