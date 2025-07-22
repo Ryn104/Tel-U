@@ -97,9 +97,9 @@ export default function Login() {
     <div className="min-h-screen bg-gradient-to-tr bg-[#f2f2f2] flex items-center justify-center px-4">
       <div className="flex flex-col lg:flex-row items-center gap-12 max-w-5xl w-full mb-5">
         {/* Card Login */}
-        <div className="card w-full max-w-md min-h-[28rem] shadow-2xl bg-white border-gray-200 border rounded-3xl p-6 order-2 lg:order-1 mt-[-2rem]">
+        <div className="card w-full max-w-md min-h-[24rem] shadow-2xl bg-white border-gray-200 border rounded-3xl p-6 order-2 lg:order-1 mt-[-2rem]">
           <div className="card-body flex flex-col justify-center items-center text-center space-y-6">
-            <h1 className="text-3xl font-extrabold text-[#002B5B]">Masuk dengan Akun Telkom University</h1>
+            <h1 className="text-2xl lg:text-3xl font-extrabold text-[#002B5B]">Masuk dengan Akun Telkom University</h1>
             <p className="text-gray-600">
               Gunakan akun resmi Telkom University Anda untuk mengakses sistem ini.
             </p>
@@ -142,10 +142,10 @@ export default function Login() {
 
         {/* Informasi & Heading */}
         <div className="text-center lg:text-left max-w-md order-1 lg:order-2">
-          <h1 className="text-4xl lg:text-5xl font-bold text-[#002B5B] leading-tight">
+          <h1 className="text-3xl lg:text-5xl font-bold text-[#002B5B] leading-tight">
             Selamat Datang di Sistem<br />Peminjaman Ruangan!
           </h1>
-          <p className="pt-6 text-gray-700">
+          <p className="lg:pt-6 pt-2 text-gray-700">
             Booking ruangan jadi lebih mudah! Cukup login dan pilih ruangan yang kamu butuhkan.
           </p>
         </div>
