@@ -108,7 +108,7 @@ export default function ChatWidget() {
                             <IoClose />
                         </button>
 
-                        <h3 className="text-lg lg:text-xl text-center text-[#002B5B] font-semibold mb-3 lg:mb-6">Chat Admin</h3>
+                        <h3 className="text-lg lg:text-xl text-center text-[#002B5B] font-semibold mb-3 lg:mb-6">Hubungi Admin</h3>
                         <form onSubmit={handleSubmitChat} className="flex flex-col gap-2 lg:gap-3">
                             <input
                                 type="text"
