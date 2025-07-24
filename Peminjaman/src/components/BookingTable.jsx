@@ -708,9 +708,6 @@ export default function BookingTable() {
             </div>
           </div>
         </dialog>
-
-
-
       </div>
     </div>
   );

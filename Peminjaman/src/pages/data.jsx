@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import '../App.css';
 import Data from '../components/BookingTable';
 import Navbar from '../components/NavBar'
+import ChatWidget from '../components/ChatWidget';
 
 const App = () => {
 
@@ -19,6 +20,7 @@ const App = () => {
     return (
         <>
             <Data />
+            <ChatWidget />
             <Navbar />
         </>
     )
