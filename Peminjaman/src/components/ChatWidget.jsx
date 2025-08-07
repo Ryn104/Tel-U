@@ -165,7 +165,7 @@ export default function ChatWidget() {
                         </form>
                         <div className='text-center'>
                             <div className='w-full h-0.5 border-t border-gray-300 mb-1'></div>
-                            <span className='text-xs lg:text-sm text-center text-gray-500'>Hubungi Langsung <a href="https://wa.me/6285711002971" className='hover:text-red-500 font-medium'>+6285711002971</a></span>
+                            <span className='text-xs lg:text-sm text-center text-gray-500'>Hubungi Langsung <a href="https://wa.me/6281320627300" className='hover:text-red-500 font-medium'>+6281320627300</a></span>
                         </div>
                     </div>
                 )}
