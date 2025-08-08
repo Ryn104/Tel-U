@@ -368,11 +368,11 @@ export default function BookingTable() {
                     downloadCSV();
                     setShowCSVModal(false);
                   }}
-                  className="btn btn-primary"
+                  className="btn bg-[#002B5B] hover:bg-[#001933] text-white border-none"
                 >
                   Download
                 </button>
-                <button onClick={() => setShowCSVModal(false)} className="btn">Batal</button>
+                <button onClick={() => setShowCSVModal(false)} className="btn bg-[#E60000] hover:bg-[#b80000] text-white">Batal</button>
               </div>
             </div>
           </div>
@@ -569,7 +569,7 @@ export default function BookingTable() {
                 </button>
 
 
-                <button onClick={() => setShowEditModal(false)} className="btn">Batal</button>
+                <button onClick={() => setShowEditModal(false)} className="btn bg-[#E60000] hover:bg-[#b80000] text-white">Batal</button>
               </div>
             </div>
           </div>
@@ -579,13 +579,13 @@ export default function BookingTable() {
           <div className="modal modal-open">
             <div className="modal-box">
               <h3 className="font-bold text-lg text-orange-600">Tolak Peminjaman</h3>
-              <p className="mb-4">Berikan alasan penolakan:</p>
+              <p className="mb-1 mt-3">Berikan alasan penolakan:</p>
               <textarea
                 className="textarea textarea-bordered w-full"
                 rows="4"
                 value={rejectReason}
                 onChange={(e) => setRejectReason(e.target.value)}
-                placeholder="Contoh: Ruangan sudah digunakan untuk acara lain."
+                placeholder="Contoh: Ruangan sedang dalam perbaikan."
               ></textarea>
 
               <div className="modal-action">
@@ -598,7 +598,7 @@ export default function BookingTable() {
                 </button>
 
                 <button
-                  className="btn"
+                  className="btn bg-[#E60000] hover:bg-[#b80000] text-white"
                   onClick={() => {
                     setShowRejectModal(false);
                     setRejectReason('');
@@ -703,7 +703,7 @@ export default function BookingTable() {
 
             <div className="modal-action mt-6">
               <form method="dialog">
-                <button className="btn btn-outline btn-primary">Tutup</button>
+                <button className="btn bg-[#E60000] hover:bg-[#b80000] text-white">Tutup</button>
               </form>
             </div>
           </div>
